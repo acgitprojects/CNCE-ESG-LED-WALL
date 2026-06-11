@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en" data-light="day">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CNCB ESG · Townhall LED Wall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet" />
+<style>
+  :root{ --orange:#F26F21; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;overflow:hidden;
+    font-family:"Inter",system-ui,-apple-system,"Noto Sans TC",sans-serif;
+    -webkit-font-smoothing:antialiased;background:#0a0c11;}
+
+  /* =====================================================
+     PALETTE — defined on :root so BOTH the scene and the
+     chrome (which lives outside #scene) theme together.
+     data-light lives on <html>.
+     ===================================================== */
+  :root{
+    /* ---- DAY palette (default) ---- */
+    --room-1:#eceee9; --room-2:#e0e1da; --room-3:#d2d2c9;
+    --ceil-1:#f6f7f4; --ceil-2:#e7e8e3;
+    --side:#d8d8d0; --side-dk:#c7c7bd;
+    --stage:#c9c8c0; --stage-edge:#b4b3aa;
+    --carpet:#9aa3ac; --seat:#5d6a78; --seat-dk:#4c5765; --seat-row:#404a57;
+    --backwall-1:#e7e8e3; --backwall-2:#d6d6cd;
+    --daylight:.9; --spot:0; --castlight:.18; --vignette:0; --aisle:0;
+    --wallbloom:rgba(255,236,206,.5);
+    /* chrome */
+    --panel:rgba(255,255,255,.82); --panel-line:rgba(20,24,32,.12);
+    --panel-shadow:0 18px 44px rgba(60,55,40,.16);
+    --txt:#1d2128; --txt-sub:#6b7280; --txt-soft:#3c424c;
+    /* dimension annotation */
+    --dim-line:rgba(34,38,46,.5); --dim-text:#2d323b; --dim-chip:rgba(255,255,255,.9);
+  }
+  :root[data-light="night"]{
+    --room-1:#11141b; --room-2:#0c0e14; --room-3:#070910;
+    --ceil-1:#0c0f16; --ceil-2:#080a10;
+    --side:#0c0f15; --side-dk:#080a10;
+    --stage:#0c0e14; --stage-edge:#1b1f28;
+    --carpet:#15181f; --seat:#1f2530; --seat-dk:#171c25; --seat-row:#12161d;
+    --backwall-1:#0e1118; --backwall-2:#090b11;
+    --daylight:0; --spot:1; --castlight:.5; --vignette:.55; --aisle:1;
+    --wallbloom:rgba(255,214,170,.7);
+    --panel:rgba(16,19,26,.72); --panel-line:rgba(255,255,255,.12);
+    --panel-shadow:0 18px 44px rgba(0,0,0,.5);
+    --txt:#eef0f4; --txt-sub:#9aa1ad; --txt-soft:#cdd2da;
+    --dim-line:rgba(255,255,255,.42); --dim-text:#dfe3ea; --dim-chip:rgba(16,19,26,.82);
+  }
+
+  /* =====================================================
+     SCENE — full viewport
+     ===================================================== */
+  #scene{position:fixed;inset:0;overflow:hidden;
+    transition:background .7s ease;background:var(--room-2);}
+
+  /* ---- camera layers ---- */
+  .env,.wallLayer,.houseLayer{position:absolute;
+    transition:transform 1s cubic-bezier(.4,0,.16,1);will-change:transform;}
+  .env,.wallLayer{inset:0;}
+  /* the floor starts at the base of the wall so it never climbs over it,
+     and adapts to viewport via the same width expression the wall uses */
+  .houseLayer{left:0;right:0;bottom:0;
+    top:calc(15vh + min(80vw,1560px,176vh)/3.81 + 1vh);overflow:hidden;}
+  #scene.no-anim .env,#scene.no-anim .wallLayer,#scene.no-anim .houseLayer{transition:none !important;}
+  .env{transform-origin:50% 42%;z-index:1;}
+  .wallLayer{transform-origin:50% 35%;z-index:3;}
+  .houseLayer{transform-origin:50% 100%;z-index:5;pointer-events:none;}
+
+  /* =====================================================
+     ENVIRONMENT (room shell)
+     ===================================================== */
+  .ceiling{position:absolute;left:0;right:0;top:0;height:24%;
+    background:linear-gradient(180deg,var(--ceil-1),var(--ceil-2));
+    transition:background .7s ease;}
+  /* recessed ceiling coffers converging toward stage */
+  .ceiling::before{content:"";position:absolute;inset:0;opacity:.6;
+    background:repeating-linear-gradient(90deg,transparent 0 9%,rgba(0,0,0,.05) 9% 9.4%);
+    -webkit-mask:linear-gradient(180deg,#000,transparent);mask:linear-gradient(180deg,#000,transparent);}
+  /* downlights */
+  .ceiling::after{content:"";position:absolute;left:0;right:0;top:54%;height:8px;
+    background:
+      radial-gradient(circle at 22% 50%,rgba(255,248,234,calc(.5 + var(--daylight)*.4)) 0 4px,transparent 5px),
+      radial-gradient(circle at 40% 50%,rgba(255,248,234,calc(.5 + var(--daylight)*.4)) 0 4px,transparent 5px),
+      radial-gradient(circle at 60% 50%,rgba(255,248,234,calc(.5 + var(--daylight)*.4)) 0 4px,transparent 5px),
+      radial-gradient(circle at 78% 50%,rgba(255,248,234,calc(.5 + var(--daylight)*.4)) 0 4px,transparent 5px);
+    background-repeat:no-repeat;}
+
+  .backwall{position:absolute;left:0;right:0;top:0;height:64%;z-index:-1;
+    background:radial-gradient(120% 120% at 50% 22%,var(--backwall-1),var(--backwall-2));
+    transition:background .7s ease;}
+
+  .sidewall{position:absolute;top:0;height:78%;width:30%;z-index:0;
+    background:linear-gradient(90deg,var(--side-dk),var(--side));transition:background .7s ease;}
+  .sidewall.l{left:0;clip-path:polygon(0 0,100% 16%,100% 80%,0 100%);}
+  .sidewall.r{right:0;background:linear-gradient(270deg,var(--side-dk),var(--side));
+    clip-path:polygon(100% 0,0 16%,0 80%,100% 100%);}
+
+  /* daylight clerestory wash (day only) */
+  .clerestory{position:absolute;left:0;right:0;top:0;height:30%;z-index:0;pointer-events:none;
+    opacity:var(--daylight);transition:opacity .7s ease;
+    background:
+      radial-gradient(60% 100% at 4% 0%,rgba(255,255,255,.9),transparent 60%),
+      radial-gradient(60% 100% at 96% 0%,rgba(232,242,248,.8),transparent 60%);}
+
+  /* stage platform under the LED wall */
+  .stage{position:absolute;left:0;right:0;top:44%;height:13%;
+    background:linear-gradient(180deg,var(--stage) 0%,var(--stage-edge) 100%);
+    box-shadow:0 26px 50px rgba(0,0,0,.22);transition:background .7s ease;}
+  .stage::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;
+    background:linear-gradient(90deg,transparent 8%,rgba(242,111,33,calc(.25 + var(--spot)*.65)) 50%,transparent 92%);
+    box-shadow:0 0 18px rgba(242,111,33,calc(var(--spot)*.6));}
+  /* front lip shadow where stage drops to the house */
+  .stage::after{content:"";position:absolute;left:0;right:0;bottom:0;height:34%;
+    background:linear-gradient(180deg,transparent,rgba(0,0,0,.18));}
+
+  /* stage spotlight beams (night) */
+  .spots{position:absolute;left:0;right:0;top:0;height:62%;z-index:2;pointer-events:none;
+    opacity:var(--spot);transition:opacity .7s ease;mix-blend-mode:screen;
+    background:
+      radial-gradient(28% 70% at 34% 0%,rgba(255,238,210,.18),transparent 70%),
+      radial-gradient(28% 70% at 66% 0%,rgba(255,238,210,.18),transparent 70%),
+      radial-gradient(34% 80% at 50% 0%,rgba(255,244,224,.16),transparent 72%);}
+
+  /* =====================================================
+     LED WALL  — physical 3.81:1 stage backdrop
+     ===================================================== */
+  .wall-mount{position:absolute;left:50%;top:15%;transform:translateX(-50%);
+    width:min(80vw,1560px,176vh);aspect-ratio:3.81 / 1;}
+  .wall-glow{position:absolute;inset:-9%;border-radius:24px;z-index:-1;filter:blur(42px);
+    background:radial-gradient(60% 130% at 50% 50%,var(--wallbloom),transparent 70%);
+    transition:background .7s ease;}
+  .wall{position:absolute;inset:0;border-radius:9px;
+    /* bezel is proportional (horizontal = 3.81 × vertical) so the lit
+       screen stays exactly 3.81:1 and the 5760×1512 canvas fills it edge-to-edge */
+    padding:clamp(5px,.7vw,11px) calc(clamp(5px,.7vw,11px) * 3.81);
+    background:linear-gradient(180deg,#3a3f49 0%,#23262d 45%,#14161b 100%);
+    box-shadow:0 40px 70px rgba(0,0,0,.34),0 0 0 1px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.12);}
+  .wall-screen{position:relative;width:100%;height:100%;overflow:hidden;border-radius:3px;
+    background:#04050a;display:flex;align-items:center;justify-content:center;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.8),inset 0 0 50px rgba(0,0,0,.5);}
+  .wall-screen::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;
+    background:linear-gradient(115deg,rgba(255,255,255,.06),transparent 30%);mix-blend-mode:screen;opacity:.6;}
+  #wallframe,#wallimg{border:0;background:#04050a;display:block;}
+  /* FULL-WIDTH: recreated dashboard authored to the 5760×1512 wall */
+  #scene[data-fit="full"] #wallframe{width:100%;height:100%;}
+  #scene[data-fit="full"] #wallimg{display:none;}
+  /* 16:9: the ORIGINAL CNCBI dashboard export, centred at full height */
+  #scene[data-fit="169"] #wallframe{display:none;}
+  #scene[data-fit="169"] #wallimg{height:100%;width:auto;object-fit:contain;}
+  .dark-tag{position:absolute;top:50%;transform:translateY(-50%);z-index:2;
+    font-size:clamp(8px,.62vw,12px);letter-spacing:.26em;color:rgba(255,255,255,.22);font-weight:600;
+    text-transform:uppercase;opacity:0;transition:opacity .4s;white-space:nowrap;writing-mode:vertical-rl;}
+  .dark-tag.l{left:3%;}.dark-tag.r{right:3%;}
+  #scene[data-fit="169"] .dark-tag{opacity:1;}
+
+  /* =====================================================
+     DIMENSION ANNOTATION — interior-designer spec drawing
+     drawn around the wall, shown when the room is in frame
+     ===================================================== */
+  .dims{position:absolute;inset:0;z-index:4;pointer-events:none;
+    opacity:0;transition:opacity .6s ease;font-family:"Inter",system-ui,sans-serif;}
+  #scene[data-view="back"] .dims,#scene[data-view="mid"] .dims{opacity:1;}
+  .dim-line{position:absolute;background:var(--dim-line);transition:background .7s ease;}
+  /* width dimension — above the wall */
+  .dim-w{left:0;right:0;bottom:100%;margin-bottom:clamp(14px,1.5vw,26px);height:1.5px;}
+  .dim-w::before,.dim-w::after{content:"";position:absolute;top:-5px;height:11px;width:1.5px;background:var(--dim-line);}
+  .dim-w::before{left:0;}.dim-w::after{right:0;}
+  /* height dimension — left of the wall */
+  .dim-h{top:0;bottom:0;right:100%;margin-right:clamp(14px,1.5vw,26px);width:1.5px;}
+  .dim-h::before,.dim-h::after{content:"";position:absolute;left:-5px;width:11px;height:1.5px;background:var(--dim-line);}
+  .dim-h::before{top:0;}.dim-h::after{bottom:0;}
+  .dim-label{position:absolute;font-size:clamp(10px,.86vw,15px);font-weight:600;letter-spacing:.01em;
+    color:var(--dim-text);background:var(--dim-chip);padding:2px 9px;border-radius:6px;white-space:nowrap;
+    transition:color .7s ease,background .7s ease;
+    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
+  .dim-w .dim-label{left:50%;bottom:6px;transform:translateX(-50%);}
+  .dim-h .dim-label{top:50%;right:9px;transform:translateY(-50%);}
+  .dim-spec{position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + clamp(10px,1.2vw,20px));
+    font-size:clamp(9px,.72vw,12px);font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--dim-text);opacity:.8;transition:color .7s ease;white-space:nowrap;}
+
+  /* lectern on the stage, to one side (scale cue) */
+  .lectern{position:absolute;left:72%;top:47.5%;width:1.5%;height:7%;border-radius:3px 3px 1px 1px;
+    background:linear-gradient(180deg,var(--stage-edge),var(--seat-row));
+    box-shadow:0 12px 22px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.1);}
+  .lectern::before{content:"";position:absolute;left:-55%;right:-55%;top:-10%;height:26%;border-radius:3px;
+    background:linear-gradient(180deg,var(--stage),var(--stage-edge));}
+
+  /* =====================================================
+     AUDITORIUM HOUSE — raked seating in perspective
+     ===================================================== */
+  .house{position:absolute;left:50%;bottom:0;width:220%;height:1700px;
+    transform:translateX(-50%) perspective(1600px) rotateX(57deg);
+    transform-origin:bottom center;}
+  .seatfield{position:absolute;inset:0;transition:background .7s ease;
+    background:
+      /* centre aisle, a touch lighter than the floor */
+      linear-gradient(90deg,transparent 46.5%,rgba(255,255,255,.05) 46.5% 53.5%,transparent 53.5%),
+      /* gentle depth gradient toward the stage */
+      linear-gradient(0deg,var(--carpet),color-mix(in srgb,var(--carpet) 82%,#000) 100%),
+      var(--carpet);}
+  /* aisle floor-strip glow (night) */
+  .aisle-glow{position:absolute;left:50%;bottom:0;transform:translateX(-50%);
+    width:4.5%;height:100%;opacity:var(--aisle);transition:opacity .7s ease;
+    background:linear-gradient(0deg,rgba(255,214,170,.6),rgba(255,214,170,0) 70%);
+    filter:blur(6px);}
+  /* warm spill cast from the bright wall onto the front rows */
+  .castlight{position:absolute;left:50%;top:0;transform:translateX(-50%);
+    width:120%;height:60%;opacity:var(--castlight);transition:opacity .7s ease;pointer-events:none;
+    background:radial-gradient(60% 100% at 50% 0%,var(--wallbloom),transparent 72%);
+    mix-blend-mode:screen;}
+
+  /* cinematic vignette (night) */
+  .vignette{position:absolute;inset:0;z-index:8;pointer-events:none;opacity:var(--vignette);
+    transition:opacity .7s ease;
+    background:radial-gradient(120% 90% at 50% 42%,transparent 52%,rgba(0,0,0,.6) 100%);}
+
+  /* =====================================================
+     CAMERA — preset viewpoint dolly transforms
+     ===================================================== */
+  #scene[data-view="back"]  .env{transform:scale(1);}
+  #scene[data-view="back"]  .wallLayer{transform:scale(1);}
+  #scene[data-view="back"]  .houseLayer{transform:scale(1);}
+
+  #scene[data-view="mid"]   .env{transform:scale(1.1);}
+  #scene[data-view="mid"]   .wallLayer{transform:scale(1.26) translateY(1.5%);}
+  #scene[data-view="mid"]   .houseLayer{transform:scale(1.45) translateY(8%);}
+
+  #scene[data-view="front"] .env{transform:scale(1.28);}
+  #scene[data-view="front"] .wallLayer{transform:scale(1.7) translateY(4%);}
+  #scene[data-view="front"] .houseLayer{transform:scale(2.15) translateY(22%);}
+
+  #scene[data-view="close"] .env{transform:scale(1.6);}
+  #scene[data-view="close"] .wallLayer{transform:scale(2.45) translateY(7%);}
+  #scene[data-view="close"] .houseLayer{transform:scale(3.5) translateY(48%);}
+
+  /* =====================================================
+     CLIENT CHROME
+     ===================================================== */
+  .topbar{position:fixed;top:20px;left:24px;z-index:40;display:flex;align-items:center;gap:12px;}
+  .topbar .badge{width:30px;height:30px;border-radius:8px;background:var(--orange);
+    box-shadow:0 4px 14px rgba(242,111,33,.4);flex:0 0 auto;}
+  .topbar .t1{font-weight:700;font-size:15px;letter-spacing:.01em;color:var(--txt);transition:color .7s;}
+  .topbar .t2{font-size:12.5px;color:var(--txt-sub);margin-top:1px;transition:color .7s;}
+
+  /* LEFT dolly-track rail */
+  #rail{position:fixed;left:22px;top:50%;transform:translateY(-50%);z-index:40;
+    display:flex;flex-direction:column;padding:12px 18px 12px 12px;border-radius:16px;
+    background:var(--panel);border:1px solid var(--panel-line);box-shadow:var(--panel-shadow);
+    -webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%);
+    transition:background .7s,border-color .7s;}
+  #rail .track{position:absolute;left:27px;top:30px;bottom:30px;width:2px;
+    background:var(--panel-line);}
+  #rail .track .fill{position:absolute;left:0;top:0;width:100%;background:var(--orange);
+    transition:height .9s cubic-bezier(.4,0,.16,1);box-shadow:0 0 10px rgba(242,111,33,.5);}
+  #rail button{appearance:none;border:0;background:transparent;cursor:pointer;font-family:inherit;
+    display:flex;align-items:center;gap:13px;padding:11px 10px;position:relative;z-index:1;text-align:left;}
+  #rail .dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto;
+    background:var(--panel);border:2px solid var(--panel-line);transition:.25s;}
+  #rail .lbl{display:flex;flex-direction:column;gap:1px;}
+  #rail .lbl .a{font-size:13.5px;font-weight:600;color:var(--txt-sub);transition:color .25s;white-space:nowrap;}
+  #rail .lbl .b{font-size:11px;color:var(--txt-sub);opacity:.7;white-space:nowrap;}
+  #rail button:hover .a{color:var(--txt-soft);}
+  #rail button.on .dot{background:var(--orange);border-color:var(--orange);
+    box-shadow:0 0 0 4px rgba(242,111,33,.18);}
+  #rail button.on .a{color:var(--txt);}
+
+  /* BOTTOM dock: readout + toggles */
+  #dock{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:40;
+    display:flex;flex-direction:column;align-items:center;gap:11px;width:max-content;max-width:94vw;}
+  .readout{font-size:13px;color:var(--txt-soft);text-align:center;line-height:1.5;max-width:560px;
+    background:var(--panel);border:1px solid var(--panel-line);border-radius:12px;padding:11px 18px;
+    box-shadow:var(--panel-shadow);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+    transition:background .7s,color .7s,border-color .7s;}
+  .readout b{color:var(--txt);font-weight:600;}
+  .toggles{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .seg{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 14px;border-radius:14px;
+    background:var(--panel);border:1px solid var(--panel-line);box-shadow:var(--panel-shadow);
+    -webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%);
+    transition:background .7s,border-color .7s;}
+  .seg .seg-l{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--txt-sub);}
+  .seg .opts{display:flex;gap:4px;background:transparent;}
+  .seg button{appearance:none;border:0;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;
+    padding:9px 16px;border-radius:9px;background:transparent;color:var(--txt-sub);transition:.2s;white-space:nowrap;}
+  .seg button:hover{color:var(--txt-soft);background:rgba(127,127,127,.12);}
+  .seg button.on{background:var(--orange);color:#fff;box-shadow:0 6px 16px rgba(242,111,33,.34);}
+
+  .hint{position:fixed;right:24px;top:22px;z-index:40;font-size:12px;color:var(--txt-sub);
+    letter-spacing:.02em;transition:color .7s;text-align:right;line-height:1.7;}
+  .hint kbd{font-family:inherit;background:var(--panel);border:1px solid var(--panel-line);
+    border-radius:5px;padding:1px 6px;color:var(--txt-soft);font-size:11px;}
+
+  @media (max-width:760px){
+    #rail{left:12px;}
+    #rail .lbl .b{display:none;}
+    .readout{display:none;}
+    .hint{display:none;}
+    .topbar{top:14px;left:14px;}
+    .seg{padding:5px 5px 5px 11px;}
+    .seg button{padding:8px 12px;}
+  }
+</style>
+</head>
+<body>
+  <div id="scene" data-view="back" data-fit="full" data-light="day">
+
+    <!-- ENVIRONMENT (far) -->
+    <div class="env">
+      <div class="backwall"></div>
+      <div class="ceiling"></div>
+      <div class="clerestory"></div>
+      <div class="sidewall l"></div>
+      <div class="sidewall r"></div>
+      <div class="stage"></div>
+      <div class="spots"></div>
+    </div>
+
+    <!-- LED WALL (mid) -->
+    <div class="wallLayer">
+      <div class="wall-mount">
+        <div class="wall-glow"></div>
+        <div class="wall">
+          <div class="wall-screen">
+            <span class="dark-tag l">unused panel area</span>
+            <iframe id="wallframe" src="index.html?embed&dim=wide" title="ESG dashboard (full-width)"></iframe>
+            <img id="wallimg" src="assets/cncbi-dashboard-original.png" alt="CNCBI ESG dashboard — original 16:9 export" />
+            <span class="dark-tag r">unused panel area</span>
+          </div>
+        </div>
+        <!-- interior-designer dimension call-outs -->
+        <div class="dims">
+          <div class="dim-line dim-w"><span class="dim-label">9.0 m</span></div>
+          <div class="dim-line dim-h"><span class="dim-label">2.362 m</span></div>
+          <div class="dim-spec">LED wall &middot; 5760 &times; 1512 px &middot; 3.81 : 1</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AUDITORIUM HOUSE (near) -->
+    <div class="vignette"></div>
+  </div>
+
+  <!-- CHROME -->
+  <div class="topbar">
+    <div class="badge"></div>
+    <div>
+      <div class="t1">CNCB ESG · Townhall LED Wall</div>
+      <div class="t2">9 m × 2.362 m wall · 5760 × 1512 px · 3.81 : 1 · compare the fit</div>
+    </div>
+  </div>
+
+  <div class="hint">
+    Viewpoint <kbd>1</kbd>–<kbd>4</kbd> · <kbd>↑</kbd><kbd>↓</kbd><br/>
+    Aspect <kbd>A</kbd> · Lights <kbd>L</kbd>
+  </div>
+
+  <div id="rail">
+    <div class="track"><div class="fill" id="railfill"></div></div>
+    <button data-view="back"><span class="dot"></span><span class="lbl"><span class="a">Back of hall</span><span class="b">whole room in view</span></span></button>
+    <button data-view="mid"><span class="dot"></span><span class="lbl"><span class="a">Mid-house</span><span class="b">typical seat</span></span></button>
+    <button data-view="front"><span class="dot"></span><span class="lbl"><span class="a">Front row</span><span class="b">up close</span></span></button>
+    <button data-view="close"><span class="dot"></span><span class="lbl"><span class="a">Close-up</span><span class="b">wall fills view</span></span></button>
+  </div>
+
+  <div id="dock">
+    <div class="readout" id="readout"></div>
+    <div class="toggles">
+      <div class="seg" id="fitSeg">
+        <span class="seg-l">Aspect</span>
+        <div class="opts">
+          <button data-fit="full">Full-width</button>
+          <button data-fit="169">16 : 9 (original)</button>
+        </div>
+      </div>
+      <div class="seg" id="lightSeg">
+        <span class="seg-l">Lights</span>
+        <div class="opts">
+          <button data-light="day">Day</button>
+          <button data-light="night">Night</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  var scene  = document.getElementById("scene");
+  var frame  = document.getElementById("wallframe");
+  var rail   = document.getElementById("rail");
+  var fill   = document.getElementById("railfill");
+  var fitSeg = document.getElementById("fitSeg");
+  var lightSeg = document.getElementById("lightSeg");
+  var readout = document.getElementById("readout");
+
+  var VIEWS = ["back","mid","front","close"];
+  var VIEWMETA = {
+    back:{n:"Back of hall"}, mid:{n:"Mid-house"}, front:{n:"Front row"}, close:{n:"Close-up"}
+  };
+  var FIT = {
+    full:{n:"Full-width", res:"5760 × 1512 px", note:"a dashboard authored to the full 9 m wall — reaches every edge, nothing wasted"},
+    "169":{n:"16 : 9 (original)", res:"1960 × 1120 px", note:"the original CNCBI export, centred at full height — only ~47% of the wall lights up, the side panels stay dark"}
+  };
+
+  var state = {view:"back", fit:"full", light:"day"};
+  try{ var s = JSON.parse(localStorage.getItem("townhallPrev")||"{}");
+       if(s.view&&VIEWMETA[s.view]) state.view=s.view;
+       if(s.fit&&FIT[s.fit]) state.fit=s.fit;
+       if(s.light==="day"||s.light==="night") state.light=s.light; }catch(e){}
+
+  var currentSrc = "";
+
+  function persist(){ try{ localStorage.setItem("townhallPrev",JSON.stringify(state)); }catch(e){} }
+
+  function render(){
+    document.documentElement.dataset.light = state.light;
+    scene.dataset.view = state.view;
+    scene.dataset.fit  = state.fit;
+    scene.dataset.light = state.light;
+
+    // full-width = recreated dashboard (iframe, set once in markup);
+    // 16:9 = original image. CSS toggles which is visible via data-fit.
+
+    // rail active + progress fill
+    [].forEach.call(rail.querySelectorAll("button"), function(b){
+      b.classList.toggle("on", b.dataset.view === state.view);
+    });
+    var idx = VIEWS.indexOf(state.view);
+    fill.style.height = (idx/(VIEWS.length-1)*100) + "%";
+
+    // toggles active
+    [].forEach.call(fitSeg.querySelectorAll("button"), function(b){
+      b.classList.toggle("on", b.dataset.fit === state.fit);
+    });
+    [].forEach.call(lightSeg.querySelectorAll("button"), function(b){
+      b.classList.toggle("on", b.dataset.light === state.light);
+    });
+
+    // readout
+    var f = FIT[state.fit];
+    readout.innerHTML =
+      '<b>' + VIEWMETA[state.view].n + '</b> · ' +
+      '<b>' + f.n + '</b> (' + f.res + ') — ' + f.note + '.';
+
+    persist();
+  }
+
+  rail.addEventListener("click", function(e){
+    var b = e.target.closest("button"); if(b){ state.view=b.dataset.view; render(); }
+  });
+  fitSeg.addEventListener("click", function(e){
+    var b = e.target.closest("button"); if(b){ state.fit=b.dataset.fit; render(); }
+  });
+  lightSeg.addEventListener("click", function(e){
+    var b = e.target.closest("button"); if(b){ state.light=b.dataset.light; render(); }
+  });
+
+  document.addEventListener("keydown", function(e){
+    var i = VIEWS.indexOf(state.view);
+    if(e.key>="1" && e.key<="4"){ state.view = VIEWS[(+e.key)-1]; render(); }
+    else if(e.key==="ArrowUp"){ state.view = VIEWS[Math.min(i+1,3)]; render(); }
+    else if(e.key==="ArrowDown"){ state.view = VIEWS[Math.max(i-1,0)]; render(); }
+    else if(e.key==="a"||e.key==="A"){ state.fit = state.fit==="full"?"169":"full"; render(); }
+    else if(e.key==="l"||e.key==="L"){ state.light = state.light==="day"?"night":"day"; render(); }
+  });
+
+  // first paint with no transition so a throttled tab can't freeze mid-dolly
+  scene.classList.add("no-anim");
+  render();
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){ scene.classList.remove("no-anim"); }); });
+})();
+</script>
+</body>
+</html>

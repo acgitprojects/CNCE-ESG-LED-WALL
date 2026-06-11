@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CNCB ESG · LED Wall Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --orange:#F26F21;
+    --ink:#22262e;
+    --sub:#6b7280;
+    --hair:rgba(20,24,32,.10);
+    /* bright office palette */
+    --plaster-1:#f4f2ec;
+    --plaster-2:#e9e6dd;
+    --plaster-3:#ddd9cf;
+    --wood-1:#c2966a;
+    --wood-2:#a87b4f;
+    --wood-3:#8d6238;
+    --floor-1:#e4e1d8;
+    --floor-2:#d4d0c5;
+    --floor-3:#c4bfb2;
+    --sky:#eaf1f6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;overflow:hidden;background:var(--plaster-2);
+    font-family:"Inter",system-ui,-apple-system,"Noto Sans TC",sans-serif;
+    color:var(--ink);-webkit-font-smoothing:antialiased;}
+
+  /* =====================================================
+     SCENE — fluid, fills the whole viewport
+     ===================================================== */
+  #scene{position:fixed;inset:0;overflow:hidden;}
+
+  /* --- room shell: bright back wall --- */
+  .room{position:absolute;inset:0;transition:opacity .55s ease;}
+  #scene[data-view="original"] .room{opacity:0;visibility:hidden;}
+
+  .backwall{position:absolute;left:0;right:0;top:0;bottom:34%;
+    background:
+      /* daylight wash from upper-left window */
+      radial-gradient(120% 130% at 12% -10%,rgba(255,255,255,.9) 0%,rgba(255,255,255,0) 46%),
+      radial-gradient(90% 120% at 88% 0%,rgba(225,236,244,.6) 0%,rgba(225,236,244,0) 50%),
+      linear-gradient(180deg,var(--plaster-1) 0%,var(--plaster-2) 62%,var(--plaster-3) 100%);}
+  /* ceiling band + recessed downlights */
+  .ceiling{position:absolute;left:0;right:0;top:0;height:13%;
+    background:linear-gradient(180deg,#fbfaf6 0%,rgba(251,250,246,0) 100%);}
+  .ceiling::after{content:"";position:absolute;left:0;right:0;top:34%;height:64%;
+    background:radial-gradient(circle at 18% 0,rgba(255,250,238,.85) 0 6px,transparent 7px),
+               radial-gradient(circle at 38% 0,rgba(255,250,238,.85) 0 6px,transparent 7px),
+               radial-gradient(circle at 62% 0,rgba(255,250,238,.85) 0 6px,transparent 7px),
+               radial-gradient(circle at 82% 0,rgba(255,250,238,.85) 0 6px,transparent 7px);
+    background-repeat:no-repeat;}
+
+  /* tall daylight windows flanking the feature wall */
+  .window{position:absolute;top:6%;bottom:34%;width:13.5%;
+    background:linear-gradient(180deg,#f6fafc 0%,#e7f0f5 45%,#dde9ef 100%);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.7);}
+  .window::before{content:"";position:absolute;inset:0;opacity:.5;
+    background:repeating-linear-gradient(180deg,transparent 0 84px,rgba(150,170,185,.35) 84px 86px),
+               repeating-linear-gradient(90deg,transparent 0 50%,rgba(150,170,185,.35) 50% calc(50% + 2px));}
+  .window::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(115deg,rgba(255,255,255,.65),transparent 40%);}
+  .window.l{left:2.5%;}
+  .window.r{right:2.5%;}
+
+  /* warm wood feature-wall backing panel behind the LED wall */
+  .backing{position:absolute;left:50%;transform:translateX(-50%);
+    top:4%;bottom:34%;width:min(74vw,1280px);border-radius:4px;
+    background:
+      linear-gradient(180deg,rgba(255,255,255,.18),transparent 22%),
+      repeating-linear-gradient(90deg,var(--wood-2) 0 33px,var(--wood-1) 33px 34px,var(--wood-3) 34px 67px,var(--wood-1) 67px 68px),
+      linear-gradient(180deg,var(--wood-1),var(--wood-3));
+    box-shadow:0 30px 70px rgba(80,55,30,.22),inset 0 1px 0 rgba(255,255,255,.25);
+    transition:opacity .45s ease;}
+  .backing::after{content:"";position:absolute;inset:0;border-radius:4px;
+    background:radial-gradient(80% 70% at 50% 22%,rgba(255,240,220,.28),transparent 60%);}
+
+  /* --- floor --- */
+  .floor{position:absolute;left:0;right:0;bottom:0;height:34%;
+    background:linear-gradient(180deg,var(--floor-1) 0%,var(--floor-2) 46%,var(--floor-3) 100%);}
+  .floor::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(120,110,90,.35),transparent);}
+  /* soft warm pool reflected from the bright wall onto the floor */
+  .floor-glow{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);
+    width:min(70vw,1180px);height:42%;border-radius:50%;filter:blur(54px);opacity:.7;
+    background:radial-gradient(closest-side,rgba(255,236,206,.7),rgba(255,236,206,.12) 60%,transparent 76%);
+    transition:opacity .5s,width .5s;}
+
+  /* reception desk */
+  .desk{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);
+    width:min(54vw,820px);height:min(18vh,168px);border-radius:12px 12px 5px 5px;
+    background:
+      linear-gradient(180deg,#efece4 0%,#e6e1d6 30%,#e6e1d6 34%,var(--wood-1) 34%,var(--wood-3) 100%);
+    box-shadow:0 34px 60px rgba(70,55,30,.28),inset 0 1px 0 rgba(255,255,255,.6);}
+  .desk::after{content:"";position:absolute;left:0;right:0;top:34%;height:2px;
+    background:linear-gradient(90deg,transparent,rgba(242,111,33,.55),transparent);}
+  .desk .mark{position:absolute;left:50%;top:7%;transform:translateX(-50%);
+    display:flex;align-items:center;gap:13px;white-space:nowrap;}
+  .desk .mark .dot{width:24px;height:24px;border-radius:6px;background:var(--orange);
+    box-shadow:0 0 16px rgba(242,111,33,.4);flex:0 0 auto;}
+  .desk .mark .zh{font-family:"Noto Sans TC";font-weight:900;font-size:clamp(15px,1.5vw,24px);letter-spacing:.04em;color:#2a2e36;}
+  .desk .mark .en{font-weight:600;font-size:clamp(9px,.85vw,14px);letter-spacing:.32em;color:var(--sub);margin-top:2px;}
+
+  /* people silhouettes for scale */
+  .people{position:absolute;left:0;right:0;bottom:7%;height:34%;pointer-events:none;}
+  .sil{position:absolute;bottom:0;background:rgba(60,58,66,.16);
+    box-shadow:0 18px 30px rgba(0,0,0,.06);}
+  .sil .head{position:absolute;left:50%;transform:translateX(-50%);border-radius:50%;
+    background:rgba(60,58,66,.16);}
+  .sil.a{left:12%;width:clamp(40px,3.2vw,62px);height:min(26vh,212px);border-radius:34px 34px 8px 8px;}
+  .sil.a .head{top:-26%;width:84%;aspect-ratio:1;}
+  .sil.b{right:11%;width:clamp(36px,3vw,56px);height:min(24vh,196px);border-radius:30px 30px 8px 8px;opacity:.85;}
+  .sil.b .head{top:-26%;width:84%;aspect-ratio:1;}
+
+  /* =====================================================
+     LED WALL — physical 3.81:1 panel, fluid size
+     ===================================================== */
+  #scene.no-anim .room,
+  #scene.no-anim .wall-mount,
+  #scene.no-anim .wall-glow,
+  #scene.no-anim .backing,
+  #scene.no-anim .floor-glow{transition:none !important;}
+
+  .wall-mount{position:absolute;left:50%;top:13.5%;transform:translateX(-50%);
+    width:min(72vw,1250px,170vh);aspect-ratio:3.81 / 1;
+    transition:width .5s ease,top .5s ease,transform .5s ease;}
+  #scene[data-view="original"] .wall-mount{top:50%;transform:translate(-50%,-50%);
+    width:min(94vw,1860px,250vh);}
+
+  /* ambient bloom — soft & warm to suit a bright room */
+  .wall-glow{position:absolute;inset:-70px;border-radius:26px;z-index:0;
+    filter:blur(42px);opacity:.85;transition:opacity .5s;
+    background:
+      radial-gradient(60% 130% at 50% 50%,rgba(255,228,196,.55),transparent 70%),
+      radial-gradient(90% 150% at 50% 30%,rgba(255,255,255,.4),transparent 72%);}
+  #scene[data-view="original"] .wall-glow{opacity:0;}
+
+  .wall{position:absolute;inset:0;z-index:1;border-radius:9px;padding:clamp(5px,.7vw,11px);
+    background:linear-gradient(180deg,#3a3f49 0%,#23262d 45%,#14161b 100%);
+    box-shadow:
+      0 48px 80px rgba(60,45,25,.32),
+      0 0 0 1px rgba(0,0,0,.18),
+      inset 0 1px 0 rgba(255,255,255,.14);}
+  #scene[data-view="original"] .wall{padding:8px;
+    box-shadow:0 60px 120px rgba(0,0,0,.35),0 0 0 1px rgba(0,0,0,.2);}
+
+  .wall-screen{position:relative;width:100%;height:100%;overflow:hidden;border-radius:3px;
+    background:#04050a;display:flex;align-items:center;justify-content:center;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.8),inset 0 0 50px rgba(0,0,0,.5);}
+  .wall-screen::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;
+    background:linear-gradient(115deg,rgba(255,255,255,.07),transparent 30%);
+    mix-blend-mode:screen;opacity:.6;}
+
+  #wallframe{border:0;background:#04050a;display:block;}
+  #scene[data-view="full"] #wallframe,
+  #scene[data-view="original"] #wallframe{width:100%;height:100%;}
+  #scene[data-view="sixnine"] #wallframe{height:100%;aspect-ratio:16/9;width:auto;}
+
+  /* dark-side hint labels on the unused panel in 16:9 view */
+  .dark-tag{position:absolute;top:50%;transform:translateY(-50%);z-index:2;
+    font-size:clamp(9px,.7vw,13px);letter-spacing:.26em;color:rgba(255,255,255,.2);font-weight:600;
+    text-transform:uppercase;opacity:0;transition:opacity .4s;white-space:nowrap;writing-mode:vertical-rl;}
+  .dark-tag.l{left:3%;}.dark-tag.r{right:3%;}
+  #scene[data-view="sixnine"] .dark-tag{opacity:1;}
+
+  /* in-scene spec plate beneath the wall */
+  .specplate{position:absolute;left:50%;top:calc(13.5% + min(72vw,1250px,170vh)/3.81 + 26px);
+    transform:translateX(-50%);display:flex;gap:10px;align-items:center;z-index:2;
+    transition:opacity .4s;font-size:clamp(10px,.85vw,13px);color:var(--sub);letter-spacing:.04em;white-space:nowrap;}
+  #scene[data-view="original"] .specplate{opacity:0;}
+  .specplate b{color:#3a3e46;font-weight:600;}
+  .specplate .sep{width:4px;height:4px;border-radius:50%;background:var(--sub);opacity:.55;}
+
+  /* =====================================================
+     PRESENTER CHROME — light theme
+     ===================================================== */
+  .topbar{position:fixed;top:20px;left:24px;z-index:50;display:flex;align-items:center;gap:12px;}
+  .topbar .badge{width:30px;height:30px;border-radius:8px;background:var(--orange);
+    box-shadow:0 4px 14px rgba(242,111,33,.35);flex:0 0 auto;}
+  .topbar .t1{font-weight:700;font-size:15px;letter-spacing:.01em;color:#1c2027;}
+  .topbar .t2{font-size:12.5px;color:var(--sub);margin-top:1px;letter-spacing:.02em;}
+
+  /* LEFT-SIDE vertical nav */
+  #nav{position:fixed;left:24px;top:50%;transform:translateY(-50%);z-index:50;
+    display:flex;flex-direction:column;gap:14px;width:max-content;max-width:30vw;}
+  .nav-eyebrow{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--sub);padding-left:4px;}
+  .switch{display:flex;flex-direction:column;gap:6px;padding:7px;border-radius:16px;
+    background:rgba(255,255,255,.78);border:1px solid var(--hair);
+    box-shadow:0 18px 44px rgba(60,50,30,.16),inset 0 1px 0 rgba(255,255,255,.8);
+    -webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);}
+  .switch button{appearance:none;border:0;cursor:pointer;font-family:inherit;
+    display:flex;flex-direction:column;align-items:flex-start;gap:3px;
+    padding:12px 18px;border-radius:11px;background:transparent;color:var(--sub);
+    transition:background .2s,color .2s;text-align:left;white-space:nowrap;min-width:188px;}
+  .switch button .bt{font-size:14.5px;font-weight:600;color:#2b2f37;}
+  .switch button .bs{font-size:11.5px;letter-spacing:.01em;color:var(--sub);}
+  .switch button:hover{background:rgba(20,24,32,.05);}
+  .switch button.on{background:var(--orange);box-shadow:0 8px 20px rgba(242,111,33,.34);}
+  .switch button.on .bt,.switch button.on .bs{color:#fff;}
+  .switch button.on .bs{opacity:.92;}
+
+  .capline{font-size:13px;line-height:1.5;color:#3c4049;max-width:300px;
+    background:rgba(255,255,255,.78);padding:13px 16px;border-radius:13px;
+    border:1px solid var(--hair);transition:opacity .25s;
+    box-shadow:0 14px 36px rgba(60,50,30,.12);
+    -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);}
+  .capline b{color:#1c2027;font-weight:600;}
+
+  .hint{position:fixed;right:24px;top:22px;z-index:50;font-size:12px;color:var(--sub);letter-spacing:.03em;}
+  .hint kbd{font-family:inherit;background:rgba(255,255,255,.8);border:1px solid var(--hair);
+    border-radius:5px;padding:1px 7px;color:#3c4049;font-size:11px;box-shadow:0 1px 2px rgba(0,0,0,.05);}
+
+  @media (max-width:720px){
+    #nav{left:14px;max-width:46vw;}
+    .switch button{min-width:150px;padding:10px 14px;}
+    .capline{display:none;}
+    .hint{display:none;}
+    .topbar{top:14px;left:16px;}
+  }
+</style>
+</head>
+<body>
+  <div id="scene" data-view="full">
+
+    <div class="room">
+      <div class="backwall"></div>
+      <div class="ceiling"></div>
+      <div class="window l"></div>
+      <div class="window r"></div>
+      <div class="backing"></div>
+      <div class="floor"></div>
+      <div class="floor-glow"></div>
+      <div class="people">
+        <div class="sil a"><div class="head"></div></div>
+        <div class="sil b"><div class="head"></div></div>
+      </div>
+      <div class="desk">
+        <div class="mark">
+          <div class="dot"></div>
+          <div>
+            <div class="zh">中信銀行（國際）</div>
+            <div class="en">C N C B &nbsp; E S G &nbsp; W A L L</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wall-mount">
+      <div class="wall-glow"></div>
+      <div class="wall">
+        <div class="wall-screen">
+          <span class="dark-tag l">unused panel area</span>
+          <iframe id="wallframe" src="index.html?embed&dim=wide" title="ESG dashboard"></iframe>
+          <span class="dark-tag r">unused panel area</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="specplate" id="specplate"></div>
+  </div>
+
+  <div class="topbar">
+    <div class="badge"></div>
+    <div>
+      <div class="t1">CNCB ESG · LED Wall Preview</div>
+      <div class="t2">Reception wall is 3.81 : 1 — which aspect should we author for?</div>
+    </div>
+  </div>
+
+  <div class="hint">Switch views <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd></div>
+
+  <div id="nav">
+    <div class="nav-eyebrow">Compare fit</div>
+    <div class="switch" id="switch">
+      <button data-view="full"><span class="bt">Full-width</span><span class="bs">3.81 : 1 · fills the wall</span></button>
+      <button data-view="sixnine"><span class="bt">16 : 9 on wall</span><span class="bs">centered · sides go dark</span></button>
+      <button data-view="original"><span class="bt">Original design</span><span class="bs">flat · no room</span></button>
+    </div>
+    <div class="capline" id="capline"></div>
+  </div>
+
+<script>
+(function(){
+  var scene   = document.getElementById("scene");
+  var frame   = document.getElementById("wallframe");
+  var sw      = document.getElementById("switch");
+  var capline = document.getElementById("capline");
+  var spec    = document.getElementById("specplate");
+
+  var VIEWS = {
+    full: {
+      dim:"wide",
+      cap:'<b>Full-width master.</b> Authored at 5760×1512 specifically for the 3.81:1 wall — the dashboard reaches every edge and no panel is wasted.',
+      spec:['5760 × 1512 px','3.81 : 1','fills the panel']
+    },
+    sixnine: {
+      dim:"169",
+      cap:'<b>A 16:9 source on a 3.81:1 wall.</b> The image centers and the side panels sit dark — roughly a third of the wall goes unused.',
+      spec:['2688 × 1512 px','16 : 9','centered · sides dark']
+    },
+    original: {
+      dim:"wide",
+      cap:'<b>The authored dashboard, flat.</b> Exactly as designed, shown without the room for a clean read.',
+      spec:['Authored layout','flat preview']
+    }
+  };
+
+  var currentSrc = frame.getAttribute("src");
+
+  function setView(v){
+    if(!VIEWS[v]) v = "full";
+    scene.dataset.view = v;
+    var want = "index.html?embed&dim=" + VIEWS[v].dim;
+    if(currentSrc !== want){ frame.src = want; currentSrc = want; }
+    capline.innerHTML = VIEWS[v].cap;
+    spec.innerHTML = VIEWS[v].spec
+      .map(function(s){ return "<b>"+s+"</b>"; })
+      .join('<span class="sep"></span>');
+    [].forEach.call(sw.children, function(b){
+      b.classList.toggle("on", b.dataset.view === v);
+    });
+    try{ localStorage.setItem("ledPreviewerView", v); }catch(e){}
+  }
+
+  sw.addEventListener("click", function(e){
+    var b = e.target.closest("button");
+    if(b) setView(b.dataset.view);
+  });
+
+  document.addEventListener("keydown", function(e){
+    if(e.key === "1") setView("full");
+    if(e.key === "2") setView("sixnine");
+    if(e.key === "3") setView("original");
+  });
+
+  var saved = "full";
+  try{ saved = localStorage.getItem("ledPreviewerView") || "full"; }catch(e){}
+  scene.classList.add("no-anim");
+  setView(saved);
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){ scene.classList.remove("no-anim"); }); });
+})();
+</script>
+</body>
+</html>
