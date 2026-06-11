@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" data-light="day">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CNCB ESG · Townhall LED Wall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="scene" data-view="back" data-fit="full" data-light="day">
+
+    <!-- ENVIRONMENT (far) -->
+    <div class="env">
+      <div class="backwall"></div>
+      <div class="ceiling"></div>
+      <div class="clerestory"></div>
+      <div class="sidewall l"></div>
+      <div class="sidewall r"></div>
+      <div class="stage"></div>
+      <div class="spots"></div>
+    </div>
+
+    <!-- LED WALL (mid) -->
+    <div class="wallLayer">
+      <div class="wall-mount">
+        <div class="wall-glow"></div>
+        <div class="wall">
+          <div class="wall-screen">
+            <span class="dark-tag l">unused panel area</span>
+            <iframe id="wallframe" src="./dashboard.html?embed&dim=wide" title="ESG dashboard (full-width)"></iframe>
+            <img id="wallimg" src="/assets/cncbi-dashboard-original.png" alt="CNCBI ESG dashboard — original 16:9 export" />
+            <span class="dark-tag r">unused panel area</span>
+          </div>
+        </div>
+        <div class="dims">
+          <div class="dim-line dim-w"><span class="dim-label">9.0 m</span></div>
+          <div class="dim-line dim-h"><span class="dim-label">2.362 m</span></div>
+          <div class="dim-spec">LED wall &middot; 5760 &times; 1512 px &middot; 3.81 : 1</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIGNETTE -->
+    <div class="vignette"></div>
+  </div>
+
+  <!-- CHROME -->
+  <div class="topbar">
+    <div class="badge"></div>
+    <div>
+      <div class="t1">CNCB ESG · Townhall LED Wall</div>
+      <div class="t2">9 m × 2.362 m wall · 5760 × 1512 px · 3.81 : 1 · compare the fit</div>
+    </div>
+  </div>
+
+  <div class="hint">
+    Viewpoint <kbd>1</kbd>–<kbd>4</kbd> · <kbd>↑</kbd><kbd>↓</kbd><br/>
+    Aspect <kbd>A</kbd> · Lights <kbd>L</kbd>
+  </div>
+
+  <div id="rail">
+    <div class="track"><div class="fill" id="railfill"></div></div>
+    <button data-view="back"><span class="dot"></span><span class="lbl"><span class="a">Back of hall</span><span class="b">whole room in view</span></span></button>
+    <button data-view="mid"><span class="dot"></span><span class="lbl"><span class="a">Mid-house</span><span class="b">typical seat</span></span></button>
+    <button data-view="front"><span class="dot"></span><span class="lbl"><span class="a">Front row</span><span class="b">up close</span></span></button>
+    <button data-view="close"><span class="dot"></span><span class="lbl"><span class="a">Close-up</span><span class="b">wall fills view</span></span></button>
+  </div>
+
+  <div id="dock">
+    <div class="readout" id="readout"></div>
+    <div class="toggles">
+      <div class="seg" id="fitSeg">
+        <span class="seg-l">Aspect</span>
+        <div class="opts">
+          <button data-fit="full">Full-width</button>
+          <button data-fit="169">16 : 9 (original)</button>
+        </div>
+      </div>
+      <div class="seg" id="lightSeg">
+        <span class="seg-l">Lights</span>
+        <div class="opts">
+          <button data-light="day">Day</button>
+          <button data-light="night">Night</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/previewer.js"></script>
+</body>
+</html>
