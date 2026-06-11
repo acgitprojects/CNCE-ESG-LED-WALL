@@ -1,4 +1,10 @@
 import './previewer.css';
+import cncbiOriginal from './assets/cncbi-dashboard-original.png';
+
+// Set the 16:9 original-export image from a Vite-hashed, base-aware URL so it
+// resolves correctly on GitHub Pages (project-page base path).
+const wallimg = document.getElementById('wallimg');
+if (wallimg) wallimg.src = cncbiOriginal;
 
 const scene    = document.getElementById('scene');
 const rail     = document.getElementById('rail');

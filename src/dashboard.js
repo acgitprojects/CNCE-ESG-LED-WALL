@@ -1,5 +1,7 @@
 'use strict';
 
+import citicLogo from './assets/citic-logo.png';
+
 /* ---------- bilingual helper ---------- */
 const t = (zh, en) => `<span class="t-zh">${zh}</span><span class="t-en">${en}</span>`;
 const num = (key, to, dec = 0) =>
@@ -193,7 +195,7 @@ function shell(f) {
         <button class="ftab" data-f="all">${t(COMBINED.zh, COMBINED.en)}</button>
         ${FLOORS.map((fl, i) => `<button class="ftab" data-f="${i}">${t(fl.zh, fl.en)}</button>`).join('')}
       </div>
-      <div class="logobox"><image-slot id="citic-logo" shape="rect" fit="contain" src="/assets/citic-logo.png" placeholder="Drop CITIC logo (PNG)"></image-slot></div>
+      <div class="logobox"><image-slot id="citic-logo" shape="rect" fit="contain" src="${citicLogo}" placeholder="Drop CITIC logo (PNG)"></image-slot></div>
     </div>
 
     <section class="panel aq" data-screen-label="Air Quality">
